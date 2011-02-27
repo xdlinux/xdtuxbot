@@ -1,34 +1,23 @@
 ﻿# zwbot project on GAE
 # -*- coding: utf-8 -*-
 import os
-import sys
-import base64
-import urllib
-import csv
 import logging
-import string
 import re
-import time
 from sets import Set
 from datetime import datetime, timedelta
-from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 
 from google.appengine.ext import db
-import config       # r14 add @20101215 独立bot的配置文件
-import db_util      # r2 add  @20101026 将数据库相关操作独立出来
-
-#sys.path.insert(0, 'tweepy.zip')
+import config 
 import tweepy
-
-# r2 add @20101026 替换csv为xls文件，加速读取
-sys.path.insert(0, 'xlrd-0.6.1.zip')
-import xlrd
 
 # When this is true, some things go to the screen as text and templates aren't always generated. Error message are more verbose.
 _DEBUG = True
+
+class SinceID(db.Model):
+  since_id = db.IntegerProperty()
 
 
 # OAuth认证并发推
@@ -39,68 +28,12 @@ def OAuth_UpdateTweet(msg):
     api = tweepy.API(auth)
     return(api.update_status(msg))
 
-
-# 读取词典文件中的下一个单词
-def GetNextTweetword_from_Dict():
-  udb = db_util.DB_Utility()
-  
-  index = udb.GetIncCounter(config.DICT_LINES)
-  xlswb = xlrd.open_workbook(config.DICT_NAME)
-  
-  sheet1 = xlswb.sheet_by_index(0)
-  title_line = 0
-  
-  try:
-    if (sheet1.cell_value(index, 0) == ''):
-      str = sheet1.cell_value(index, 1)
-      title_line = 1
-    else:
-      str = '%s%s%s' % ( sheet1.cell_value(index, 0), config.TW_WORD_LINK, sheet1.cell_value(index, 1) )
-    
-    if (len(sheet1.row_values(index)) > 2):     # 如果有第三列，取出来附加上
-      if (sheet1.cell_value(index, 2) != ''):
-        str = '%s%s%s' % ( str, config.TW_WORD_SP, sheet1.cell_value(index, 2) )
-    
-    tweet = str
-    udb.SetTitleFlag(title_line, tweet)
-    
-    if title_line == 0:
-      ssp = sheet1.cell_value(index, 0).split()
-      udb.SetRollingWords(ssp[0])                 # 取出开始的单词，用于复习
-      udb.SetCurrentWord(tweet)
-    else:
-      tweet = '%s%s' % (tweet, config.BOT_HASHTAG)
-    
-  except:
-    tweet = ''
-  
-  return(tweet)
-
-
 # 请求 /
 class MainPage(webapp.RequestHandler):
   def get(self):
     msg = 'It work!'
     path = os.path.join(os.path.dirname(__file__), 'template/msg.html')
     self.response.out.write(template.render(path, { 'msg': msg }))
-
-# 请求 /t
-class ShowCurrentWord(webapp.RequestHandler):
-  def get(self):
-    mydate = datetime.utcnow() + timedelta(hours=+8)
-    ts_hour = mydate.time().hour
-    ts_min = mydate.time().minute / 5
-    
-    udb = db_util.DB_Utility()
-    
-    if (ts_hour < 7):
-      words = '%s' % config.GAE_PAGE_TIPS
-    else:
-      words = '%s<BR>%s' % ( udb.GetTitleString(), udb.GetCurrentWord() )
-      logging.debug('ShowCurrentWord(): "%s"' % words)
-    
-    path = os.path.join(os.path.dirname(__file__), 'template/words.html')
-    self.response.out.write(template.render(path, { 'words': words }))
 
 # [ADMIN] 请求提及页面，显示最近的15条@消息
 class GetMentions(webapp.RequestHandler):
@@ -205,70 +138,70 @@ class CronJobCheck(webapp.RequestHandler):
     #  return
     #
     
+    mydate = datetime.utcnow() + timedelta(hours=+8)
+    ts_hour = mydate.time().hour
+    ts_min = mydate.time().minute
+    
+    if ((ts_hour == 7) and (ts_min == 0)):        # 7:00
+        msg = '%s%s' % (config.MSG_GET_UP, config.BOT_HASHTAG)
+        resp=OAuth_UpdateTweet(msg)                        # 早安世界
+    elif ((ts_hour == 23) and (ts_min == 30)):    # 23:30
+        msg = '%s%s' % (config.MSG_SLEEP, config.BOT_HASHTAG)
+        resp=OAuth_UpdateTweet(msg)                        # 晚安世界
+
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)
-    timeline = api.home_timeline()#since_id=41723768795570177)
-    regx=re.compile(config.RT_REGEX,re.I|re.M) 
-    for tweet in timeline:
+    
+    tweetid=SinceID.all().get()
+    logging.info(tweetid)
+    if ( tweetid == None ):
+        logging.warning("Initial!")
+        tweetid=SinceID()
+        timeline = api.home_timeline()
+    else:
+        logging.info("Since ID is: %d" % tweetid.since_id)
+        timeline = api.home_timeline(since_id=tweetid.since_id)
+    
+    #self.response.out.write('GETTING TIMELINE<br />')
+    regx=re.compile(config.RT_REGEX,re.I|re.M)
+    tweets=timeline[::-1]   # 时间是倒序的
+    if tweets == []:
+        logging.info("no new tweets!")
+        return
+    for tweet in tweets:
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
             continue
         text = tweet.text
+
         m = regx.match(text)
         if m == None:
             continue
 
         msg = 'RT @%s:%s' % (user,text)
         #logging.info(msg)
-
-        #mydate = datetime.utcnow() + timedelta(hours=+8)
-        #ts_hour = mydate.time().hour
-        #ts_min = mydate.time().minute / 5
-        #
-        #udb = db_util.DB_Utility()
-        #
-        # 检查之前是否有失败发生
-        #if (not ts_min in [0, 3, 6, 9, 11]):          # 分钟为 00/15/30/45/55 的周期才继续处理
-        #  if (udb.GetFatalMin() != -1):               # 或者上次有失败发生，重设周期数继续
-        #    ts_min = udb.GetFatalMin()
-        #    if (udb.GetTitleFlag() == 0):
-        #      logging.warning('上次失败发生在 %d 分，尝试进行恢复...' % (ts_min*5))
-        #      if (ts_min in [0, 3, 6]):
-        #        udb.DecCounter()                      # 退回到上一次的count处
-        #  else:                                       # 没有失败，直接返回
-        #    return
         
-        
+        #self.response.out.write('Sending message %s<br />' % msg)
         try:
           resp=OAuth_UpdateTweet(msg)                        # 发送到Twitter
           logging.info('Send Tweet: %s, rtn %s' % (msg, resp))
-          #udb.SetFatalMin(-1)                           # 如果执行成功，将失败周期数改回-1
           
-          # 检查刚才发送的是否为标题，如果是则设置失败min，让下个5分钟继续推一条
-          #if (udb.GetTitleFlag() == 1):
-          #  udb.SetFatalMin(ts_min)
-          
-          #logging.debug('Auto tweet success complete.')
         except tweepy.TweepError, e:
-          if ('Status is a duplicate' in e):            # 说明Tweet已经发出去了，清除掉这个失败
-            #udb.SetFatalMin(-1)
-            #msg = '[WARN] 尝试恢复 %d 时刻的Tweet，但该Tweet已存在: %s' % (ts_min*5, e)
-            msg = 'Status is duplicate'
-            logging.warring(msg)
-          else:
-            #udb.SetFatalMin(ts_min)
-            #msg = '[Tweepy错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
             msg = 'Tweepy Error:%s' % e
             logging.error(msg)
         except Exception, e:
-          #msg = '[未知错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
-          msg = 'Uknow Error'
-          logging.error(msg)
-
+            msg = 'Uknow Error'
+            logging.error(msg)
     
-    #path = os.path.join(os.path.dirname(__file__), 'template/msg.html')
-    #self.response.out.write(template.render(path, { 'msg': msg }))
+    tweetid.since_id=tweet.id
+    logging.info("Next Since ID: %d" % tweetid.since_id)
+    tweetid.put()
+
+    path = os.path.join(os.path.dirname(__file__), 'template/timeline.html')
+    self.response.out.write(template.render(path, { 'timeline': timeline }))
+
+
 
 # 发送独立的 msg 到Twitter
 class SendTweet2Twitter(webapp.RequestHandler):
@@ -293,12 +226,10 @@ class SendTweet2Twitter(webapp.RequestHandler):
 
 
 application = webapp.WSGIApplication([('/',GetList),
-                                      ('/RT', GetList),
-                                      ('/timeline',GetTimeline),
+                                      (config.URL_RT, GetList),
+                                      (config.URL_TIMELINE,GetTimeline),
                                       (config.URL_MENTIONS, GetMentions),
-                                      (config.KEY_FOBACK_ALL, FollowAllNewcomers),
                                       (config.KEY_CRONJOB, CronJobCheck),
-                                      (config.URL_SENDTWEET, SendTweet2Twitter)
                                      ], debug=True)
 
 def main():
