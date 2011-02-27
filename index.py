@@ -282,9 +282,9 @@ class SendTweet2Twitter(webapp.RequestHandler):
 
 
 
-application = webapp.WSGIApplication([('/RT', GetList),
+application = webapp.WSGIApplication([('/',GetList),
+                                      ('/RT', GetList),
                                       ('/timeline',GetTimeline),
-                                      (config.URL_CURWORD, ShowCurrentWord),
                                       (config.URL_MENTIONS, GetMentions),
                                       (config.KEY_FOBACK_ALL, FollowAllNewcomers),
                                       (config.KEY_CRONJOB, CronJobCheck),

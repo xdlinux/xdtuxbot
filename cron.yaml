@@ -1,4 +1,8 @@
 cron:
+- description: Auto Retweet
+  url: /CronJobXdTuxBot
+  schedule: every 3 minutes
+  timezone: Asia/Shanghai
 
 - description: Auto follow back
   url: /AutoFollowBack

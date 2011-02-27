@@ -8,11 +8,15 @@
 
 ## OAuth认证需要的 Consumer Key 和 Access Token
 ## August 31, 2010, Basic Auth has been deprecated. All applications must now use OAuth
-CONSUMER_KEY = 'NxRNiatciHHyyIjOajlo6g'
-CONSUMER_SECRET = 'U9mQR5s1TixeWkjQxNunGIK72ynLb0bllKjWVFQXU2w'
-ACCESS_TOKEN = '246485694-XHWHlIAWSpIJWSm1y1HVfU5EeKnQA4Xn9Jcrm39S'
-ACCESS_SECRET = 'hJ0aGfaZAlolBOYbjh9j5DcjaMOZsFOrPnsYDg32t4'
+#CONSUMER_KEY = 'NxRNiatciHHyyIjOajlo6g'
+#CONSUMER_SECRET = 'U9mQR5s1TixeWkjQxNunGIK72ynLb0bllKjWVFQXU2w'
+#ACCESS_TOKEN = '246485694-XHWHlIAWSpIJWSm1y1HVfU5EeKnQA4Xn9Jcrm39S'
+#ACCESS_SECRET = 'hJ0aGfaZAlolBOYbjh9j5DcjaMOZsFOrPnsYDg32t4'
 
+CONSUMER_KEY = '7LSRAULElzlYxqpV9NUzbQ'
+CONSUMER_SECRET = 'T0CGNSG1PsE7TiGhHjwYXcdFIduoYsINv95GH58D4Q'
+ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
+ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
 ## 词库配置
 DICT_NAME       = 'static/sample_dict.xls'        # 词库名，注意是绝对路径
@@ -24,7 +28,7 @@ URL_CURWORD     = '/t'                            # 当前单词页面
 URL_MENTIONS    = '/backdoor2checkmentions'       # 提及页面
 KEY_FOBACK_ALL  = '/AutoFollowBack'               # 回Fo动作的触发名 (注意要和Cron.yaml中的保持同步)
 # 请修改此 CronJob Key 为其他人无法猜到的字符串，以防被人利用 (注意要和Cron.yaml中的保持同步)
-KEY_CRONJOB     = '/InputYourCronJobKeyHere'
+KEY_CRONJOB     = '/CronJobXdTuxBot'
 URL_SENDTWEET   = '/tweet'               # 手动发Tweet到Twitter (例如请求: /tweet2bot?msg='Hello World!')
 
 
