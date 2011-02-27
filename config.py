@@ -8,15 +8,11 @@
 
 ## OAuth认证需要的 Consumer Key 和 Access Token
 ## August 31, 2010, Basic Auth has been deprecated. All applications must now use OAuth
-#CONSUMER_KEY = 'NxRNiatciHHyyIjOajlo6g'
-#CONSUMER_SECRET = 'U9mQR5s1TixeWkjQxNunGIK72ynLb0bllKjWVFQXU2w'
-#ACCESS_TOKEN = '246485694-XHWHlIAWSpIJWSm1y1HVfU5EeKnQA4Xn9Jcrm39S'
-#ACCESS_SECRET = 'hJ0aGfaZAlolBOYbjh9j5DcjaMOZsFOrPnsYDg32t4'
 
-CONSUMER_KEY = '7LSRAULElzlYxqpV9NUzbQ'
-CONSUMER_SECRET = 'T0CGNSG1PsE7TiGhHjwYXcdFIduoYsINv95GH58D4Q'
-ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
-ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
+CONSUMER_KEY = ''
+CONSUMER_SECRET = ''
+ACCESS_TOKEN = ''
+ACCESS_SECRET = ''
 
 ## 关键词
 RT_REGEX ='.*xdtuxbot.*|.*linux.*|.*android.*|.*meego.*|.*ubuntu.*|.*arch.*|.*gentoo.*|.*debian.*|.*firefox.*|.*chrome.*|.*google.*|.*chromium.*|.*python.*|.*geek.*|.*apache.*|.*mysql.*|.*php.*|.*django.*|.*rails.*|.*ruby.*|.*GPL.*|.*vim.*|.*emacs.*'
