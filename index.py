@@ -17,7 +17,7 @@ from google.appengine.ext.webapp import template
 import config       # r14 add @20101215 独立bot的配置文件
 import db_util      # r2 add  @20101026 将数据库相关操作独立出来
 
-sys.path.insert(0, 'tweepy.zip')
+#sys.path.insert(0, 'tweepy.zip')
 import tweepy
 
 # r2 add @20101026 替换csv为xls文件，加速读取
@@ -112,6 +112,49 @@ class GetMentions(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'template/mentions.html')
     self.response.out.write(template.render(path, { 'mentions': mentions }))
 
+# TimeLine
+class GetTimeline(webapp.RequestHandler):
+  def get(self):
+    auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
+    auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
+    api = tweepy.API(auth)
+    timeline = tweepy.Cursor(api.home_timeline).items(config.HOME_COUNT)
+    
+    logging.info('Check Timeline')
+    
+    path = os.path.join(os.path.dirname(__file__), 'template/timeline.html')
+    self.response.out.write(template.render(path, { 'timeline': timeline }))
+
+# RT list
+
+class GetList(webapp.RequestHandler):
+  def get(self):
+    count=config.HOME_COUNT
+    auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
+    auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
+    api = tweepy.API(auth)
+     
+    max_id = self.request.get('max_id')  
+    #logging.info(max_id)
+   
+    if max_id=='': 
+        RT=api.list_timeline(owner='xdlinux',slug='rt-2',per_page=count+1)
+        #RT = tweepy.Cursor(api.list_timeline,owner='xdlinux',slug='rt-2').items(count)
+        max_id=RT[-1].id
+        RT.pop()
+    else:
+        max_id=int(max_id)
+        RT=api.list_timeline(owner='xdlinux',slug='rt-2',max_id=max_id,per_page=count+1)
+        #RT = tweepy.Cursor(api.list_timeline,owner='xdlinux',slug='rt-2',max_id=max_id).items(count)
+        max_id=RT[-1].id
+        RT.pop()
+
+    logging.info('Check list')
+     
+    next="RT?max_id=%d" % max_id
+    
+    path = os.path.join(os.path.dirname(__file__), 'template/index.html')
+    self.response.out.write(template.render(path, { 'RT': RT ,'NEXT': next}))
 
 # 自动回Fo所有新的Followers
 class FollowAllNewcomers(webapp.RequestHandler):
@@ -138,8 +181,6 @@ class FollowAllNewcomers(webapp.RequestHandler):
     logging.info('Follow %d user, skip %d.' % (suc_count, err_count))
     
     self.response.out.write('Success create_friendship() with %d user, %d skiped.' % (suc_count, err_count))
-
-
 
 #
 # Cron Job
@@ -241,7 +282,8 @@ class SendTweet2Twitter(webapp.RequestHandler):
 
 
 
-application = webapp.WSGIApplication([('/', MainPage),
+application = webapp.WSGIApplication([('/RT', GetList),
+                                      ('/timeline',GetTimeline),
                                       (config.URL_CURWORD, ShowCurrentWord),
                                       (config.URL_MENTIONS, GetMentions),
                                       (config.KEY_FOBACK_ALL, FollowAllNewcomers),

@@ -25,7 +25,7 @@ URL_MENTIONS    = '/backdoor2checkmentions'       # 提及页面
 KEY_FOBACK_ALL  = '/AutoFollowBack'               # 回Fo动作的触发名 (注意要和Cron.yaml中的保持同步)
 # 请修改此 CronJob Key 为其他人无法猜到的字符串，以防被人利用 (注意要和Cron.yaml中的保持同步)
 KEY_CRONJOB     = '/InputYourCronJobKeyHere'
-URL_SENDTWEET   = '/backdoor2tweet'               # 手动发Tweet到Twitter (例如请求: /tweet2bot?msg='Hello World!')
+URL_SENDTWEET   = '/tweet'               # 手动发Tweet到Twitter (例如请求: /tweet2bot?msg='Hello World!')
 
 
 ## 个性化提示语设置
@@ -41,6 +41,8 @@ GAE_PAGE_TIPS   = '现在是bot的休息时间'
 
 ## 其他参数设置
 MENTIONS_COUNT  = 15                              # 提及页面的显示条数
+HOME_COUNT = 30                                   # 主页面显示条数
+
 
 # 单词的连接符和分隔符
 TW_WORD_LINK    = ' - '                           # 单元格A和单元格B之间的连接符

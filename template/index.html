@@ -1,7 +1,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<title>mention @xdlinux</title>
+<title>Timeline @xdlinux</title>
 <style>
 * {
 margin: 0px;
@@ -92,7 +92,7 @@ color: #999;
 <body>
 <div id="page-outer">
 <div id="component">
-  {% for status in mentions %}
+  {% for status in RT %}
     <div class="tweet">
     {% if status.user %}
       <div class="tweet-row">
@@ -104,6 +104,7 @@ color: #999;
         </div>
         <div class="tweet-user-block-desc">
           {{ status.user.description }}
+		  {{ status.id}}
         </div>
       </div>
     {% endif %}
@@ -119,6 +120,8 @@ color: #999;
     </div>
   {% endfor %}
 </div>
+<a href={{NEXT}}>next page</a>
 </div>
+
 </body>
 </html>

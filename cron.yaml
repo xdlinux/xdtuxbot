@@ -1,10 +1,5 @@
 cron:
 
-- description: (Cron Job) to execute program
-  url: /InputYourCronJobKeyHere
-  schedule: every 5 mins
-  timezone: Asia/Shanghai
-
 - description: Auto follow back
   url: /AutoFollowBack
   schedule: every 23 hours
