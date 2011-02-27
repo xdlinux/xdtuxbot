@@ -1,0 +1,39 @@
+application: justin-wong
+version: 1
+runtime: python
+api_version: 1
+
+# default_expiration: "3650d"
+
+handlers:
+- url: /favicon.ico
+  static_files: static/images/favicon.ico
+  upload: static/images/favicon.ico
+  mime_type: image/x-icon
+
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+
+
+- url: /cat
+  static_files: static/files/cat_s_daily.html
+  upload: static/files/cat_s_daily.html
+
+# All URLs beginning with /stylesheets are treated as paths to static files in
+# the stylesheets/ directory.  Note that static_dir handlers do not use a
+# regular expression for the URL pattern, only a prefix.
+#- url: /stylesheets
+#  static_dir: stylesheets
+
+# All URLs ending in .gif .png or .jpg are treated as paths to static files in
+# the static/ directory.  The URL pattern is a regexp, with a grouping that is
+# inserted into the path to the file.
+- url: /(.*\.(gif|png|jpg))
+  static_files: static/images/\1
+  upload: static/images/(.*\.(gif|png|jpg))
+  secure: optional
+
+# Handle request
+- url: /.*
+  script: index.py
