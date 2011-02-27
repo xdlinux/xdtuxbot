@@ -3,8 +3,3 @@ cron:
   url: /CronJobXdTuxBot
   schedule: every 3 minutes
   timezone: Asia/Shanghai
-
-- description: Auto follow back
-  url: /AutoFollowBack
-  schedule: every 23 hours
-  timezone: Asia/Shanghai
