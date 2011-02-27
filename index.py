@@ -7,6 +7,8 @@ import urllib
 import csv
 import logging
 import string
+import re
+import time
 from sets import Set
 from datetime import datetime, timedelta
 from google.appengine.api import urlfetch
@@ -14,6 +16,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 
+from google.appengine.ext import db
 import config       # r14 add @20101215 独立bot的配置文件
 import db_util      # r2 add  @20101026 将数据库相关操作独立出来
 
@@ -188,77 +191,84 @@ class FollowAllNewcomers(webapp.RequestHandler):
 class CronJobCheck(webapp.RequestHandler):
   def get(self):
     # r14 add @20101130 增加请求来源的判断，只接受由CronJob发起的请求
-    Access_CronJob = False
-    headers = self.request.headers.items()
+    #Access_CronJob = False
+    #headers = self.request.headers.items()
+    #
+    #for key, value in headers:
+    #  if (key == 'X-Appengine-Cron') and (value == 'true'):
+    #    Access_CronJob = True
+    #    break
+    ## 如果不是CronJob来源的请求，记录日志并放弃操作
+    #if (not Access_CronJob):
+    #  logging.debug('CronJobCheck() access denied!')
+    #  logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
+    #  return
+    #
     
-    for key, value in headers:
-      if (key == 'X-Appengine-Cron') and (value == 'true'):
-        Access_CronJob = True
-        break
-    # 如果不是CronJob来源的请求，记录日志并放弃操作
-    if (not Access_CronJob):
-      logging.debug('CronJobCheck() access denied!')
-      logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
-      return
+    auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
+    auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
+    api = tweepy.API(auth)
+    timeline = api.home_timeline()#since_id=41723768795570177)
+    regx=re.compile(config.RT_REGEX,re.I|re.M) 
+    for tweet in timeline:
+        user = tweet.user.screen_name
+        if user == 'xdtuxbot':
+            continue
+        text = tweet.text
+        m = regx.match(text)
+        if m == None:
+            continue
+
+        msg = 'RT @%s:%s' % (user,text)
+        #logging.info(msg)
+
+        #mydate = datetime.utcnow() + timedelta(hours=+8)
+        #ts_hour = mydate.time().hour
+        #ts_min = mydate.time().minute / 5
+        #
+        #udb = db_util.DB_Utility()
+        #
+        # 检查之前是否有失败发生
+        #if (not ts_min in [0, 3, 6, 9, 11]):          # 分钟为 00/15/30/45/55 的周期才继续处理
+        #  if (udb.GetFatalMin() != -1):               # 或者上次有失败发生，重设周期数继续
+        #    ts_min = udb.GetFatalMin()
+        #    if (udb.GetTitleFlag() == 0):
+        #      logging.warning('上次失败发生在 %d 分，尝试进行恢复...' % (ts_min*5))
+        #      if (ts_min in [0, 3, 6]):
+        #        udb.DecCounter()                      # 退回到上一次的count处
+        #  else:                                       # 没有失败，直接返回
+        #    return
+        
+        
+        try:
+          resp=OAuth_UpdateTweet(msg)                        # 发送到Twitter
+          logging.info('Send Tweet: %s, rtn %s' % (msg, resp))
+          #udb.SetFatalMin(-1)                           # 如果执行成功，将失败周期数改回-1
+          
+          # 检查刚才发送的是否为标题，如果是则设置失败min，让下个5分钟继续推一条
+          #if (udb.GetTitleFlag() == 1):
+          #  udb.SetFatalMin(ts_min)
+          
+          #logging.debug('Auto tweet success complete.')
+        except tweepy.TweepError, e:
+          if ('Status is a duplicate' in e):            # 说明Tweet已经发出去了，清除掉这个失败
+            #udb.SetFatalMin(-1)
+            #msg = '[WARN] 尝试恢复 %d 时刻的Tweet，但该Tweet已存在: %s' % (ts_min*5, e)
+            msg = 'Status is duplicate'
+            logging.warring(msg)
+          else:
+            #udb.SetFatalMin(ts_min)
+            #msg = '[Tweepy错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
+            msg = 'Tweepy Error:%s' % e
+            logging.error(msg)
+        except Exception, e:
+          #msg = '[未知错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
+          msg = 'Uknow Error'
+          logging.error(msg)
+
     
-    mydate = datetime.utcnow() + timedelta(hours=+8)
-    ts_hour = mydate.time().hour
-    ts_min = mydate.time().minute / 5
-    
-    udb = db_util.DB_Utility()
-    
-    # 7:00 ~ 23:59 是工作时间，不满足工作时间的直接返回
-    if (ts_hour < 7):
-      return
-    
-    # 检查之前是否有失败发生
-    if (not ts_min in [0, 3, 6, 9, 11]):          # 分钟为 00/15/30/45/55 的周期才继续处理
-      if (udb.GetFatalMin() != -1):               # 或者上次有失败发生，重设周期数继续
-        ts_min = udb.GetFatalMin()
-        if (udb.GetTitleFlag() == 0):
-          logging.warning('上次失败发生在 %d 分，尝试进行恢复...' % (ts_min*5))
-          if (ts_min in [0, 3, 6]):
-            udb.DecCounter()                      # 退回到上一次的count处
-      else:                                       # 没有失败，直接返回
-        return
-    
-    if ((ts_hour == 7) and (ts_min == 0)):        # 7:00
-      msg = '%s%s' % (config.MSG_GET_UP, config.BOT_HASHTAG)
-    elif ((ts_hour == 23) and (ts_min == 11)):    # 23:55
-      msg = '%s%s' % (config.MSG_SLEEP, config.BOT_HASHTAG)
-    elif (ts_min in [0, 3, 6]):                   # every 00/15/30 推单词
-      msg = GetNextTweetword_from_Dict()
-    elif (ts_min == 9):                           # every 45 (复习)
-      msg = '%s%s%s%s' % (config.MSG_REVIEW_1, udb.GetRollingWords(), config.MSG_REVIEW_2, config.BOT_HASHTAG)
-    else:                                         # every 55 (不是23:55，不处理)
-      return
-    
-    logging.info('Send Tweet: %s' % msg)
-    
-    try:
-      OAuth_UpdateTweet(msg)                        # 发送到Twitter
-      udb.SetFatalMin(-1)                           # 如果执行成功，将失败周期数改回-1
-      
-      # 检查刚才发送的是否为标题，如果是则设置失败min，让下个5分钟继续推一条
-      if (udb.GetTitleFlag() == 1):
-        udb.SetFatalMin(ts_min)
-      
-      #logging.debug('Auto tweet success complete.')
-    except tweepy.TweepError, e:
-      if ('Status is a duplicate' in e):            # 说明Tweet已经发出去了，清除掉这个失败
-        udb.SetFatalMin(-1)
-        msg = '[WARN] 尝试恢复 %d 时刻的Tweet，但该Tweet已存在: %s' % (ts_min*5, e)
-        logging.warring(msg)
-      else:
-        udb.SetFatalMin(ts_min)
-        msg = '[Tweepy错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
-        logging.error(msg)
-    except Exception, e:
-      msg = '[未知错误] 错误发生在 %d 分, %s' % (ts_min*5, e)
-      logging.error(msg)
-    
-    path = os.path.join(os.path.dirname(__file__), 'template/msg.html')
-    self.response.out.write(template.render(path, { 'msg': msg }))
+    #path = os.path.join(os.path.dirname(__file__), 'template/msg.html')
+    #self.response.out.write(template.render(path, { 'msg': msg }))
 
 # 发送独立的 msg 到Twitter
 class SendTweet2Twitter(webapp.RequestHandler):

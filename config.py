@@ -18,10 +18,8 @@ CONSUMER_SECRET = 'T0CGNSG1PsE7TiGhHjwYXcdFIduoYsINv95GH58D4Q'
 ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
 ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
-## 词库配置
-DICT_NAME       = 'static/sample_dict.xls'        # 词库名，注意是绝对路径
-DICT_LINES      = 24                              # 词库中记录条数 (达到此条数会自动从头开始播放)
-
+## 关键词
+RT_REGEX = 'linux|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|google|chromium|python|geek|apache|mysql|php|django|rails|ruby|GPL|vim|emacs'
 
 ## 访问路径
 URL_CURWORD     = '/t'                            # 当前单词页面
