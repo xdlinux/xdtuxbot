@@ -24,6 +24,10 @@ handlers:
   upload: static/images/(.*\.(gif|png|jpg))
   secure: optional
 
+- url: /(.*\.(css|js))
+  static_files: template/\1
+  upload: template/(.*\.(css|js))
+  secure: optional
 # Handle request
 - url: /.*
   script: index.py

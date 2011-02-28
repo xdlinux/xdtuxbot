@@ -37,5 +37,5 @@ MSG_SLEEP       = [ '主人，该睡觉了！要不，我先去睡啦！晚安�
 
 ## 其他参数设置
 MENTIONS_COUNT  = 15                              # 提及页面的显示条数
-HOME_COUNT = 30                                   # 主页面显示条数
+HOME_COUNT = 20                                   # 主页面显示条数
 
