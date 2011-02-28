@@ -1,4 +1,4 @@
-﻿# zwbot configure
+﻿# xdtuxbot configure
 # -*- coding: utf-8 -*-
 ## OAuth认证需要的 Consumer Key 和 Access Token
 ## August 31, 2010, Basic Auth has been deprecated. All applications must now use OAuth

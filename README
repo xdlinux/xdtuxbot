@@ -1,0 +1,4 @@
+xdtuxbot是基于zwbot和tweepy的twitter机器人，功能有：
+1. 自动RT Timeline中含有关键词的tweet
+2. 7点早安+天气预报和，23:30晚安
+3. List的Web API，只能看推

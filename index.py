@@ -1,4 +1,4 @@
-﻿# zwbot project on GAE
+﻿# xdtuxbot project on GAE
 # -*- coding: utf-8 -*-
 import os
 import logging
