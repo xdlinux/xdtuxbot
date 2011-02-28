@@ -10,6 +10,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 
 from google.appengine.ext import db
+import random
+import weather
 import config 
 import tweepy
 
@@ -69,28 +71,47 @@ class GetList(webapp.RequestHandler):
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)
-     
-    max_id = self.request.get('max_id')  
-    #logging.info(max_id)
-   
-    if max_id=='': 
-        RT=api.list_timeline(owner='xdlinux',slug='rt-2',per_page=count+1)
-        #RT = tweepy.Cursor(api.list_timeline,owner='xdlinux',slug='rt-2').items(count)
-        max_id=RT[-1].id
-        RT.pop()
+    
+    user = self.request.get('user')
+
+    if user == 'xdlinux':
+        slug = 'rt-2'
+    elif user == 'xdlinuxbot':
+        slug = 'rt'
     else:
-        max_id=int(max_id)
-        RT=api.list_timeline(owner='xdlinux',slug='rt-2',max_id=max_id,per_page=count+1)
-        #RT = tweepy.Cursor(api.list_timeline,owner='xdlinux',slug='rt-2',max_id=max_id).items(count)
-        max_id=RT[-1].id
-        RT.pop()
+        user = 'xdlinux'
+        slug = 'rt-2'
+
+    page = self.request.get('page')
+    if page == '':
+        page = 1
+    else:
+        page = int(page)
+
+    RT=api.list_timeline(owner=user,slug=slug,per_page=count,page=page)
 
     logging.info('Check list')
-     
-    next="RT?max_id=%d" % max_id
+    logging.info(RT[0].created_at)
+    
+    #时区调整
+    for i in range(len(RT)):
+        Ttime=str(RT[i].created_at)
+        Ttime=Ttime.replace(':','-')
+        Ttime=Ttime.replace(' ','-')
+        T=Ttime.split('-')
+        for t in range(6): 
+            T[t]=int(T[t])
+        Ttime=datetime(T[0],T[1],T[2],T[3],T[4],T[5])+timedelta(hours=+8)
+        RT[i].created_at=Ttime.strftime('%Y-%m-%d %H:%M:%S')
+
+    next="RT?user=%s&page=%d" % (user,(page+1))
+    if page > 1:
+        prev="RT?user=%s&page=%d" % (user,(page-1))
+    else:
+        prev=''
     
     path = os.path.join(os.path.dirname(__file__), 'template/index.html')
-    self.response.out.write(template.render(path, { 'RT': RT ,'NEXT': next}))
+    self.response.out.write(template.render(path, { 'RT': RT ,'NEXT': next, 'PREV':prev, 'LIST':user}))
 
 # 自动回Fo所有新的Followers
 class FollowAllNewcomers(webapp.RequestHandler):
@@ -124,31 +145,40 @@ class FollowAllNewcomers(webapp.RequestHandler):
 class CronJobCheck(webapp.RequestHandler):
   def get(self):
     # r14 add @20101130 增加请求来源的判断，只接受由CronJob发起的请求
-    #Access_CronJob = False
-    #headers = self.request.headers.items()
-    #
-    #for key, value in headers:
-    #  if (key == 'X-Appengine-Cron') and (value == 'true'):
-    #    Access_CronJob = True
-    #    break
-    ## 如果不是CronJob来源的请求，记录日志并放弃操作
-    #if (not Access_CronJob):
-    #  logging.debug('CronJobCheck() access denied!')
-    #  logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
-    #  return
-    #
+    Access_CronJob = False
+    headers = self.request.headers.items()
+    
+    for key, value in headers:
+      if (key == 'X-Appengine-Cron') and (value == 'true'):
+        Access_CronJob = True
+        break
+    # 如果不是CronJob来源的请求，记录日志并放弃操作
+    if (not Access_CronJob):
+      logging.debug('CronJobCheck() access denied!')
+      logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
+      return
+    
     
     mydate = datetime.utcnow() + timedelta(hours=+8)
     ts_hour = mydate.time().hour
     ts_min = mydate.time().minute
     
     if ((ts_hour == 7) and (ts_min == 0)):        # 7:00
-        msg = '%s%s' % (config.MSG_GET_UP, config.BOT_HASHTAG)
+        wther=weather.Weather('day')
+        msg_idx=random.randint(0,len(config.MSG_GET_UP)-1)
+        msg = '%s 今天西安的天气是:%s %s' % (config.MSG_GET_UP[msg_idx], wther, config.BOT_HASHTAG)
         resp=OAuth_UpdateTweet(msg)                        # 早安世界
     elif ((ts_hour == 23) and (ts_min == 30)):    # 23:30
-        msg = '%s%s' % (config.MSG_SLEEP, config.BOT_HASHTAG)
+        msg_idx=random.randint(0,len(config.MSG_SLEEP)-1)
+        msg = '%s%s' % (config.MSG_SLEEP[msg_idx], config.BOT_HASHTAG)
         resp=OAuth_UpdateTweet(msg)                        # 晚安世界
-
+       
+    
+    #wther=weather.Weather('day')
+    #msg_idx=random.randint(0,len(config.MSG_GET_UP)-1)
+    #msg = '%s 今天白天的天气是:%s %s' % (config.MSG_GET_UP[msg_idx], wther, config.BOT_HASHTAG)
+    #logging.info(msg) 
+    #return 
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)

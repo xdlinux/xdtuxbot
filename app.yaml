@@ -16,16 +16,6 @@ handlers:
   upload: static/robots.txt
 
 
-#- url: /cat
-#  static_files: static/files/cat_s_daily.html
-#  upload: static/files/cat_s_daily.html
-
-# All URLs beginning with /stylesheets are treated as paths to static files in
-# the stylesheets/ directory.  Note that static_dir handlers do not use a
-# regular expression for the URL pattern, only a prefix.
-#- url: /stylesheets
-#  static_dir: stylesheets
-
 # All URLs ending in .gif .png or .jpg are treated as paths to static files in
 # the static/ directory.  The URL pattern is a regexp, with a grouping that is
 # inserted into the path to the file.
@@ -34,6 +24,10 @@ handlers:
   upload: static/images/(.*\.(gif|png|jpg))
   secure: optional
 
+- url: /(.*\.(css|js))
+  static_files: template/\1
+  upload: template/(.*\.(css|js))
+  secure: optional
 # Handle request
 - url: /.*
   script: index.py
