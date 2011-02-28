@@ -1,0 +1,33 @@
+application: xdtuxbot
+version: 1
+runtime: python
+api_version: 1
+
+# default_expiration: "3650d"
+
+handlers:
+- url: /favicon.ico
+  static_files: static/images/favicon.ico
+  upload: static/images/favicon.ico
+  mime_type: image/x-icon
+
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+
+
+# All URLs ending in .gif .png or .jpg are treated as paths to static files in
+# the static/ directory.  The URL pattern is a regexp, with a grouping that is
+# inserted into the path to the file.
+- url: /(.*\.(gif|png|jpg))
+  static_files: static/images/\1
+  upload: static/images/(.*\.(gif|png|jpg))
+  secure: optional
+
+- url: /(.*\.(css|js))
+  static_files: template/\1
+  upload: template/(.*\.(css|js))
+  secure: optional
+# Handle request
+- url: /.*
+  script: index.py
