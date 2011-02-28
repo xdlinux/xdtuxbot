@@ -1,17 +1,6 @@
 ﻿# zwbot configure
 # -*- coding: utf-8 -*-
-
-##
-## 部署到GAE前，请参照 DeploymentGuide 修改下列配置，并且自定义你的bot
-##  http://code.google.com/p/zwbot/wiki/DeploymentGuide
-##
-
 ## OAuth认证需要的 Consumer Key 和 Access Token
-## August 31, 2010, Basic Auth has been deprecated. All applications must now use OAuth
-#CONSUMER_KEY = 'NxRNiatciHHyyIjOajlo6g'
-#CONSUMER_SECRET = 'U9mQR5s1TixeWkjQxNunGIK72ynLb0bllKjWVFQXU2w'
-#ACCESS_TOKEN = '246485694-XHWHlIAWSpIJWSm1y1HVfU5EeKnQA4Xn9Jcrm39S'
-#ACCESS_SECRET = 'hJ0aGfaZAlolBOYbjh9j5DcjaMOZsFOrPnsYDg32t4'
 
 CONSUMER_KEY = '7LSRAULElzlYxqpV9NUzbQ'
 CONSUMER_SECRET = 'T0CGNSG1PsE7TiGhHjwYXcdFIduoYsINv95GH58D4Q'
@@ -32,8 +21,19 @@ URL_SENDTWEET   = '/backdoor2tweet'               # 手动发Tweet到Twitter (�
 
 ## 个性化提示语设置
 BOT_HASHTAG     = ' #xdlinux'                       # 特殊推中的HashTag，用于复习索引 (不需要请留空)
-MSG_GET_UP      = '早安世界，我是西电开源社区的小机器人，今天上午神马课阿？'           # 早上 07:00 的起床提醒 (例如：主人，该起床背单词了哦)
-MSG_SLEEP       = '主人，该睡觉了！要不我先去睡啦！晚安世界！'           # 晚上 23:55 的睡觉提醒 (例如：主人，该上床睡觉啦)
+MSG_GET_UP      = ['早安世界，上午神马课阿',
+                   '起床，学习！',
+                   '早安世界，好困哦！',
+                   '早安世界，可是我还想睡！',
+                   '美好的一天！',
+                   '新的一天！',
+                   '一定要起床么，我还没睡醒唉…']   # 早上 07:00 的起床提
+MSG_SLEEP       = [ '主人，该睡觉了！要不，我先去睡啦！晚安世界！',
+                    '晚安世界',
+                    '碎觉去，我想要个妹纸… 怎么？机器人就不能喜欢妹纸么？',
+                    '做题做得好辛苦阿，不弄了，睡觉去!',
+                    '碎觉碎觉，大家晚安！'
+                    ]# 晚上 23:55 的睡觉提醒 (例如：主人，该上床睡觉啦)
 
 ## 其他参数设置
 MENTIONS_COUNT  = 15                              # 提及页面的显示条数
