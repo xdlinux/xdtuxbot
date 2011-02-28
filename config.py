@@ -9,7 +9,7 @@ ACCESS_TOKEN = ''
 ACCESS_SECRET = ''
 
 ## 关键词
-RT_REGEX ='.*xdtuxbot.*|.*linux.*|.*android.*|.*meego.*|.*ubuntu.*|.*arch.*|.*gentoo.*|.*debian.*|.*firefox.*|.*chrome.*|.*google.*|.*chromium.*|.*python.*|.*geek.*|.*apache.*|.*mysql.*|.*php.*|.*django.*|.*rails.*|.*ruby.*|.*GPL.*|.*vim.*|.*emacs.*'
+RT_REGEX ='.*xdtuxbot.*|.*linux.*|.*android.*|.*meego.*|.*ubuntu.*|.*arch.*|.*gentoo.*|.*debian.*|.*firefox.*|.*chrome.*|.*google.*|.*chromium.*|.*python.*|.*geek.*|.*apache.*|.*sql.*|.*php.*|.*django.*|.*rails.*|.*ruby.*|.*GPL.*|.*vim.*|.*emacs.*'
 
 ## 访问路径
 URL_RT = '/RT'                      # 推群
