@@ -8,7 +8,7 @@ ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
 ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
 ## 关键词
-RT_REGEX=""".*xdtuxbot.*|.*linux.*|.*unix.*|.*android.*|.*meego.*|.*ubuntu.*|.*arch.*|.*gentoo.*|.*debian.*|.*firefox.*|.*chrome.*|.*google.*|.*chromium.*|.*python.*|.*geek.*|.*apache.*|.*nginx.*|.*sql.*|.*php.*|.*django.*|.*rails.*|.*ruby.*|.*GPL.*|.*vim.*|.*emacs.*"""
+RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|google|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome| kde |gnu|perl|freebsd|netbsd|openbsd|hack"""
 
 ## 访问路径
 URL_RT = '/RT'                      # 推群
