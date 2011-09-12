@@ -14,6 +14,8 @@ import random
 import weather
 import config 
 import tweepy
+import urlparse,httplib
+import command
 
 # When this is true, some things go to the screen as text and templates aren't always generated. Error message are more verbose.
 _DEBUG = True
@@ -21,6 +23,51 @@ _DEBUG = True
 class SinceID(db.Model):
   since_id = db.IntegerProperty()
 
+# 展开t.co网址
+def url_expand( url ):
+    components = urlparse.urlparse(url)
+    c = httplib.HTTPConnection(components.netloc)
+    c.request("GET",components.path)
+    r = c.getresponse()
+    l = r.getheader('Location')
+    if l == None:
+        return url
+    else:
+        hl = urlparse.urlparse(l).netloc
+        if hl in config.shorteners:
+            return url_expand( l )
+        else:
+            return l
+
+def parse_content( content ):
+    
+    # 处理@
+    content = re.sub(r'@(.*?)(\s|:|$)',
+                     r'<a href="https://twitter.com/\1">@\1</a>\2',
+                    content)
+    # 处理#
+    content = re.sub(r'#(.*?)(\s|$)',
+            r'<a href="https://twitter.com/search/%23\1">#\1</a>\2',
+                    content)
+   
+    # 展开网址
+    
+    content = re.sub(r'(http://.*?)(\s|$)',
+                     r'<a href="\1">\1</a>\2',
+                     content)
+
+    r_url = re.compile('<a.*>(http://t.co/.*?)</a>')
+    m = r_url.findall(content)
+    for s_url in m:
+        print s_url
+        if s_url != '':
+            l_url = url_expand( s_url )
+            print l_url
+            content += '<div class="long-url"><a href="%s">%s</a></div>' \
+                % ( l_url, l_url)
+    
+    content = re.sub(r'\n','<br>',content)
+    return content
 
 # OAuth认证并发推
 def OAuth_UpdateTweet(msg):
@@ -64,7 +111,6 @@ class GetTimeline(webapp.RequestHandler):
     self.response.out.write(template.render(path, { 'timeline': timeline }))
 
 # RT list
-
 class GetList(webapp.RequestHandler):
   def get(self):
     count=config.HOME_COUNT
@@ -104,17 +150,9 @@ class GetList(webapp.RequestHandler):
     #超链接和@ 
     for i in range(len(RT)):
         content = RT[i].text
-        content = re.sub(r'@(.*?)(\s|:|$)',
-                         r'<a href="https://twitter.com/\1">@\1</a>\2',
-                        content)
-        content = re.sub(r'#(.*?)(\s|$)',
-                r'<a href="https://twitter.com/search/%23\1">#\1</a>\2',
-                        content)
-        content = re.sub(r'(http://.*?)(\s|$)',
-                         r'<a href="\1">\1</a>\2',
-                         content)
+        content = parse_content( content )
         RT[i].text = content
-        logging.info(content)
+        #logging.info(content)
 
     next="RT?user=%s&page=%d" % (user,(page+1))
     if page > 1:
@@ -127,9 +165,9 @@ class GetList(webapp.RequestHandler):
 # Cron Job
 class CronJobCheck(webapp.RequestHandler):
   def get(self):
-    Access_CronJob = False
+    Access_CronJob = True
     headers = self.request.headers.items()
-    
+     
     for key, value in headers:
       if (key == 'X-Appengine-Cron') and (value == 'true'):
         Access_CronJob = True
@@ -144,7 +182,12 @@ class CronJobCheck(webapp.RequestHandler):
     ts_hour = mydate.time().hour
     ts_min = mydate.time().minute
     
-    if ((ts_hour == 7) and ( 0 <= ts_min <= 2)):        # 7:00
+    dbug = self.request.get('debug')
+    logging.debug(dbug)
+
+
+    # 7:00早安世界
+    if (((ts_hour == 7) and ( 0 <= ts_min <= 2)) or (dbug=='morning')): # 7:00
         error = False
         try:
             wther=weather.weather()
@@ -160,13 +203,25 @@ class CronJobCheck(webapp.RequestHandler):
         
         resp=OAuth_UpdateTweet(msg)                        # 早安世界
         logging.info("%s:%d" % (msg,wther[1]))
-    
+   
+    # 23:30 晚安世界
     elif ((ts_hour == 23) and (30 <= ts_min <=32)):    # 23:30
         msg_idx=random.randint(0,len(config.MSG_SLEEP)-1)
         msg = '%s%s' % (config.MSG_SLEEP[msg_idx], config.BOT_HASHTAG)
         resp=OAuth_UpdateTweet(msg)                        # 晚安世界
         logging.info(msg)
-    
+  
+    # 每小时一条命令
+    elif (((7<=ts_hour<=23) and (15<=ts_min<=17)) or (dbug=='cli')):
+        msg = command.random()
+        if msg != None:
+            msg = msg.replace("# commandlinefu.com by David Winterbottom\n\n#","//")
+            msg = '%s %s' % ( "叮咚！小bot教CLI时间到了！", msg[:-1])
+            msg +="#commandlinefu"
+            logging.info(msg)
+            resp = OAuth_UpdateTweet(msg)
+
+    # 扫TL，转推
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)
@@ -184,6 +239,7 @@ class CronJobCheck(webapp.RequestHandler):
     
     #self.response.out.write('GETTING TIMELINE<br />')
     regx=re.compile(config.RT_REGEX,re.I|re.M)
+    mgc = re.compile(config.MGC,re.I|re.M)
     tweets=timeline[::-1]   # 时间是倒序的
     if tweets == []:
         logging.info("no new tweets!")
@@ -193,10 +249,15 @@ class CronJobCheck(webapp.RequestHandler):
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
             continue
+        
         text = tweet.text
         m = regx.search(text)
         if m == None:
             continue
+        n = mgc.search(text)
+        if n != None:
+            continue
+
 
         msg = 'RT @%s:%s' % (user,text)
         #logging.info(msg)

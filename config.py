@@ -8,8 +8,9 @@ ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
 ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
 ## 关键词
-RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|google|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome| kde |gnu|perl|freebsd|netbsd|openbsd|hack"""
+RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu|perl|freebsd|netbsd|openbsd|hack|html5| kde """
 
+MGC="gfw|翻墙|中共|土共|共产党|当局|政府|#notrt"
 ## 访问路径
 URL_RT = '/RT'                      # 推群
 URL_TIMELINE = '/timeline'          # 时间线
@@ -39,3 +40,5 @@ MSG_SLEEP       = [ '主人，该睡觉了！要不，我先去睡啦！晚安�
 MENTIONS_COUNT  = 15                              # 提及页面的显示条数
 HOME_COUNT = 20                                   # 主页面显示条数
 
+shorteners = ['t.co','tr.im','is.gd','tinyurl.com','bit.ly','snipurl.com','cli.gs',
+                           'feedproxy.google.com','goo.gl']
