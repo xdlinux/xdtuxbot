@@ -23,6 +23,7 @@ div {
   padding-top: 10px;
   text-align: center;
 }
+
 #component {
   margin-left: auto;
   margin-right: auto;
@@ -49,6 +50,8 @@ div {
 
 #nav-bar a:link, #nav-bar a:visited {
   /*padding: 0.4em 1em 0.4em 1em;*/
+  padding-left:10px;
+  padding-right:10px;
   color: #0084B4;
   background-color: #FFF;
   text-decoration: none;
@@ -57,12 +60,12 @@ div {
 
 #nav-bar a:hover {
   color: #0084B4;
+  padding-left:10px;
+  padding-right:10px;
   text-decoration:underline; 
   background-color: #EEE;
 }
 a, a:visited{
-  padding-left:10px;
-  padding-right:10px;
   color: #0084B4;
   text-decoration:none; 
 }
@@ -173,4 +176,9 @@ a, a:visited{
 .tweet-timestamp a {
   color: #999;
 }
-
+.long-url {
+  margin:4px 4px 4px 4px;
+  padding:2px 2px 2px 2px;
+  border:1px solid #eee;
+  background:#eef;
+}

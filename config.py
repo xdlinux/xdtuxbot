@@ -1,16 +1,15 @@
-﻿# xdtuxbot configure
+
 # -*- coding: utf-8 -*-
 ## OAuth认证需要的 Consumer Key 和 Access Token
-## August 31, 2010, Basic Auth has been deprecated. All applications must now use OAuth
-
 CONSUMER_KEY = ''
 CONSUMER_SECRET = ''
 ACCESS_TOKEN = ''
 ACCESS_SECRET = ''
 
 ## 关键词
-RT_REGEX ='.*xdtuxbot.*|.*linux.*|.*android.*|.*meego.*|.*ubuntu.*|.*arch.*|.*gentoo.*|.*debian.*|.*firefox.*|.*chrome.*|.*google.*|.*chromium.*|.*python.*|.*geek.*|.*apache.*|.*sql.*|.*php.*|.*django.*|.*rails.*|.*ruby.*|.*GPL.*|.*vim.*|.*emacs.*'
+RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu|perl|freebsd|netbsd|openbsd|hack|html5| kde """
 
+MGC="gfw|翻墙|中共|土共|共产党|当局|政府|#notrt"
 ## 访问路径
 URL_RT = '/RT'                      # 推群
 URL_TIMELINE = '/timeline'          # 时间线
@@ -40,3 +39,5 @@ MSG_SLEEP       = [ '主人，该睡觉了！要不，我先去睡啦！晚安�
 MENTIONS_COUNT  = 15                              # 提及页面的显示条数
 HOME_COUNT = 20                                   # 主页面显示条数
 
+shorteners = ['t.co','tr.im','is.gd','tinyurl.com','bit.ly','snipurl.com','cli.gs',
+                           'feedproxy.google.com','goo.gl']

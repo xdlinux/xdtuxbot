@@ -14,6 +14,8 @@ import random
 import weather
 import config 
 import tweepy
+import urlparse,httplib
+import command
 
 # When this is true, some things go to the screen as text and templates aren't always generated. Error message are more verbose.
 _DEBUG = True
@@ -21,6 +23,51 @@ _DEBUG = True
 class SinceID(db.Model):
   since_id = db.IntegerProperty()
 
+# 展开t.co网址
+def url_expand( url ):
+    components = urlparse.urlparse(url)
+    c = httplib.HTTPConnection(components.netloc)
+    c.request("GET",components.path)
+    r = c.getresponse()
+    l = r.getheader('Location')
+    if l == None:
+        return url
+    else:
+        hl = urlparse.urlparse(l).netloc
+        if hl in config.shorteners:
+            return url_expand( l )
+        else:
+            return l
+
+def parse_content( content ):
+    
+    # 处理@
+    content = re.sub(r'@(.*?)(\s|:|$)',
+                     r'<a href="https://twitter.com/\1">@\1</a>\2',
+                    content)
+    # 处理#
+    content = re.sub(r'#(.*?)(\s|$)',
+            r'<a href="https://twitter.com/search/%23\1">#\1</a>\2',
+                    content)
+   
+    # 展开网址
+    
+    content = re.sub(r'(http://.*?)(\s|$)',
+                     r'<a href="\1">\1</a>\2',
+                     content)
+
+    r_url = re.compile('<a.*>(http://t.co/.*?)</a>')
+    m = r_url.findall(content)
+    for s_url in m:
+        print s_url
+        if s_url != '':
+            l_url = url_expand( s_url )
+            print l_url
+            content += '<div class="long-url"><a href="%s">%s</a></div>' \
+                % ( l_url, l_url)
+    
+    content = re.sub(r'\n','<br>',content)
+    return content
 
 # OAuth认证并发推
 def OAuth_UpdateTweet(msg):
@@ -64,7 +111,6 @@ class GetTimeline(webapp.RequestHandler):
     self.response.out.write(template.render(path, { 'timeline': timeline }))
 
 # RT list
-
 class GetList(webapp.RequestHandler):
   def get(self):
     count=config.HOME_COUNT
@@ -73,7 +119,6 @@ class GetList(webapp.RequestHandler):
     api = tweepy.API(auth)
     
     user = self.request.get('user')
-
     if user == 'xdlinux':
         slug = 'rt-2'
     elif user == 'xdlinuxbot':
@@ -81,7 +126,6 @@ class GetList(webapp.RequestHandler):
     else:
         user = 'xdlinux'
         slug = 'rt-2'
-
     page = self.request.get('page')
     if page == '':
         page = 1
@@ -103,6 +147,12 @@ class GetList(webapp.RequestHandler):
             T[t]=int(T[t])
         Ttime=datetime(T[0],T[1],T[2],T[3],T[4],T[5])+timedelta(hours=+8)
         RT[i].created_at=Ttime.strftime('%Y-%m-%d %H:%M:%S')
+    #超链接和@ 
+    for i in range(len(RT)):
+        content = RT[i].text
+        content = parse_content( content )
+        RT[i].text = content
+        #logging.info(content)
 
     next="RT?user=%s&page=%d" % (user,(page+1))
     if page > 1:
@@ -112,42 +162,12 @@ class GetList(webapp.RequestHandler):
     
     path = os.path.join(os.path.dirname(__file__), 'template/index.html')
     self.response.out.write(template.render(path, { 'RT': RT ,'NEXT': next, 'PREV':prev, 'LIST':user}))
-
-# 自动回Fo所有新的Followers
-class FollowAllNewcomers(webapp.RequestHandler):
-  def get(self):
-    auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
-    auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
-    api = tweepy.API(auth)
-    
-    followers_ids = tweepy.Cursor(api.followers_ids).items()
-    followers_set = Set(followers_ids)
-    friends_ids = tweepy.Cursor(api.friends_ids).items()
-    friends_set = Set(friends_ids)
-    
-    suc_count = 0             # 成功建立关系的个数
-    err_count = 0             # 可能已经发出申请的保护用户
-    
-    for user_id in (followers_set-friends_set):
-      try:
-        api.create_friendship(id=user_id)
-        suc_count += 1
-      except:
-        err_count += 1
-    
-    logging.info('Follow %d user, skip %d.' % (suc_count, err_count))
-    
-    self.response.out.write('Success create_friendship() with %d user, %d skiped.' % (suc_count, err_count))
-
-#
 # Cron Job
-#
 class CronJobCheck(webapp.RequestHandler):
   def get(self):
-    # r14 add @20101130 增加请求来源的判断，只接受由CronJob发起的请求
-    Access_CronJob = False
+    Access_CronJob = True
     headers = self.request.headers.items()
-    
+     
     for key, value in headers:
       if (key == 'X-Appengine-Cron') and (value == 'true'):
         Access_CronJob = True
@@ -156,33 +176,57 @@ class CronJobCheck(webapp.RequestHandler):
     if (not Access_CronJob):
       logging.debug('CronJobCheck() access denied!')
       logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
-      return
-    
+    #  return
     
     mydate = datetime.utcnow() + timedelta(hours=+8)
     ts_hour = mydate.time().hour
     ts_min = mydate.time().minute
     
-    if ((ts_hour == 7) and (ts_min == 0)):        # 7:00
-        wther=weather.Weather('day')
+    dbug = self.request.get('debug')
+    logging.debug(dbug)
+
+
+    # 7:00早安世界
+    if (((ts_hour == 7) and ( 0 <= ts_min <= 2)) or (dbug=='morning')): # 7:00
+        error = False
+        try:
+            wther=weather.weather()
+        except weather.FetchError:
+            logging.error("Weather Fetch Error!")
+            error = True
         msg_idx=random.randint(0,len(config.MSG_GET_UP)-1)
-        msg = '%s 今天西安的天气是:%s %s' % (config.MSG_GET_UP[msg_idx], wther, config.BOT_HASHTAG)
+        if error:
+            msg = '%s%s' % (config.MSG_GET_UP[msg_idx],config.BOT_HASHTAG)
+        else:
+            msg = '%s 今天西安的天气是:%s %s' % \
+                (config.MSG_GET_UP[msg_idx], wther[0], config.BOT_HASHTAG)
+        
         resp=OAuth_UpdateTweet(msg)                        # 早安世界
-    elif ((ts_hour == 23) and (ts_min == 30)):    # 23:30
+        logging.info("%s:%d" % (msg,wther[1]))
+   
+    # 23:30 晚安世界
+    elif ((ts_hour == 23) and (30 <= ts_min <=32)):    # 23:30
         msg_idx=random.randint(0,len(config.MSG_SLEEP)-1)
         msg = '%s%s' % (config.MSG_SLEEP[msg_idx], config.BOT_HASHTAG)
         resp=OAuth_UpdateTweet(msg)                        # 晚安世界
-       
-    
-    #wther=weather.Weather('day')
-    #msg_idx=random.randint(0,len(config.MSG_GET_UP)-1)
-    #msg = '%s 今天白天的天气是:%s %s' % (config.MSG_GET_UP[msg_idx], wther, config.BOT_HASHTAG)
-    #logging.info(msg) 
-    #return 
+        logging.info(msg)
+  
+    # 每小时一条命令
+    elif (((7<=ts_hour<=23) and (15<=ts_min<=17)) or (dbug=='cli')):
+        msg = command.random()
+        if msg != None:
+            msg = msg.replace("# commandlinefu.com by David Winterbottom\n\n#","//")
+            msg = '%s %s' % ( "叮咚！小bot教CLI时间到了！", msg[:-1])
+            msg +="#commandlinefu"
+            logging.info(msg)
+            resp = OAuth_UpdateTweet(msg)
+
+    # 扫TL，转推
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)
     
+    #since id
     tweetid=SinceID.all().get()
     logging.info(tweetid)
     if ( tweetid == None ):
@@ -195,28 +239,32 @@ class CronJobCheck(webapp.RequestHandler):
     
     #self.response.out.write('GETTING TIMELINE<br />')
     regx=re.compile(config.RT_REGEX,re.I|re.M)
+    mgc = re.compile(config.MGC,re.I|re.M)
     tweets=timeline[::-1]   # 时间是倒序的
     if tweets == []:
         logging.info("no new tweets!")
         return
+    
     for tweet in tweets:
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
             continue
+        
         text = tweet.text
-
-        m = regx.match(text)
+        m = regx.search(text)
         if m == None:
             continue
+        n = mgc.search(text)
+        if n != None:
+            continue
+
 
         msg = 'RT @%s:%s' % (user,text)
         #logging.info(msg)
         
-        #self.response.out.write('Sending message %s<br />' % msg)
         try:
-          resp=OAuth_UpdateTweet(msg)                        # 发送到Twitter
+          resp=OAuth_UpdateTweet(msg)           # 发送到Twitter
           logging.info('Send Tweet: %s, rtn %s' % (msg, resp))
-          
         except tweepy.TweepError, e:
             msg = 'Tweepy Error:%s' % e
             logging.error(msg)
