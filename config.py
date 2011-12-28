@@ -1,4 +1,3 @@
-﻿# zwbot configure
 # -*- coding: utf-8 -*-
 ## OAuth认证需要的 Consumer Key 和 Access Token
 
@@ -7,6 +6,9 @@ CONSUMER_SECRET = 'Kf7dU6BFa4zw0g9kc5WeQOmLinLcsLTdApXRiGDEQ'
 ACCESS_TOKEN = '258307067-ZGxSl0UMm1OAwqpYSWFvIsN1OpAQeDtFiHCPC4Rc'
 ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
+
+#手动发Tweet的KEY
+TWEET_KEY = 'JFVFTRQU4DJ6M4Zc'
 ## 关键词
 RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu|perl|freebsd|netbsd|openbsd|hack|html5| kde """
 
@@ -17,7 +19,7 @@ URL_TIMELINE = '/timeline'          # 时间线
 URL_MENTIONS    = '/mentions'       # 提及页面
 # 请修改此 CronJob Key 为其他人无法猜到的字符串，以防被人利用 (注意要和Cron.yaml中的保持同步)
 KEY_CRONJOB     = '/CronJobXdTuxBot'
-URL_SENDTWEET   = '/backdoor2tweet'               # 手动发Tweet到Twitter (例如请求: /tweet2bot?msg='Hello World!')
+URL_SENDTWEET   = '/tweet'               # 手动发Tweet到Twitter (例如请求: /tweet2bot?msg='Hello World!')
 
 
 ## 个性化提示语设置

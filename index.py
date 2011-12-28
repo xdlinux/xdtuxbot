@@ -1,4 +1,4 @@
-﻿# zwbot project on GAE
+﻿# xdtuxbot project on GAE
 # -*- coding: utf-8 -*-
 import os
 import logging
@@ -285,6 +285,10 @@ class CronJobCheck(webapp.RequestHandler):
 class SendTweet2Twitter(webapp.RequestHandler):
   def get(self):
     msg = self.request.get('msg')
+    key = self.request.get('key')
+    if key != config.TWEET_KEY:
+        logging.critical('如果这个请求不是由你手动触发的话，这意味者你的TweetKey已经泄漏!')
+        return
     try:
       if msg != '':
         resp = OAuth_UpdateTweet(msg)
@@ -308,6 +312,7 @@ application = webapp.WSGIApplication([('/',GetList),
                                       (config.URL_TIMELINE,GetTimeline),
                                       (config.URL_MENTIONS, GetMentions),
                                       (config.KEY_CRONJOB, CronJobCheck),
+                                      (config.URL_SENDTWEET, SendTweet2Twitter),
                                      ], debug=True)
 
 def main():
