@@ -8,7 +8,7 @@ ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 
 
 #手动发Tweet的KEY
-TWEET_KEY = 'JFVFTRQU4DJ6M4Zc'
+TWEET_KEY = 'V8Q6DvexTyCE3se47rtBX8em'
 ## 关键词
 RT_REGEX="""xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python|geek|apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu|perl|freebsd|netbsd|openbsd|hack|html5| kde """
 
@@ -43,4 +43,4 @@ MENTIONS_COUNT  = 15                              # 提及页面的显示条数
 HOME_COUNT = 20                                   # 主页面显示条数
 
 shorteners = ['t.co','tr.im','is.gd','tinyurl.com','bit.ly','snipurl.com','cli.gs',
-                           'feedproxy.google.com','goo.gl']
+                           'feedproxy.google.com','goo.gl','feeds.feedburner.com']
