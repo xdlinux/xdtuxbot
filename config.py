@@ -43,4 +43,4 @@ MENTIONS_COUNT  = 15                              # 提及页面的显示条数
 HOME_COUNT = 20                                   # 主页面显示条数
 
 shorteners = ['t.co','tr.im','is.gd','tinyurl.com','bit.ly','snipurl.com','cli.gs',
-                           'feedproxy.google.com','goo.gl']
+                           'feedproxy.google.com','goo.gl','feeds.feedburner.com']
