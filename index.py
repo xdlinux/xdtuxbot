@@ -58,7 +58,7 @@ def parse_content( content ):
     r_url = re.compile('<a.*>(http://t.co/.*?)</a>')
     m = r_url.findall(content)
     for s_url in m:
-        logging.info(s_url) 
+        #logging.info(s_url) 
         if s_url != '':
             l_url = url_expand( s_url )
             logging.info(l_url) 
@@ -187,7 +187,7 @@ class CronJobCheck(webapp.RequestHandler):
     
     dbug = self.request.get('debug')
     logging.debug(dbug)
-
+    
     # 7:00早安世界
     if (((ts_hour == 7) and ( 0 <= ts_min <= 2)) or (dbug=='morning')): # 7:00
         error = False
@@ -200,12 +200,13 @@ class CronJobCheck(webapp.RequestHandler):
         if error:
             msg = '%s%s' % (config.MSG_GET_UP[msg_idx],config.BOT_HASHTAG)
         else:
-            msg = '%s 今天西安的天气是:%s %s' % \
-                (config.MSG_GET_UP[msg_idx], wther[0], config.BOT_HASHTAG)
+            msg = '%s 今天%s的天气是:%s %s' % \
+                (config.MSG_GET_UP[msg_idx], config.CITY, wther, config.BOT_HASHTAG)
         
         OAuth_UpdateTweet(msg)                        # 早安世界
-        logging.info("%s:%d" % (msg,wther[1]))
+        logging.info("%s:%d" % (msg,wther))
    
+
     # 23:30 晚安世界
     elif ((ts_hour == 23) and (30 <= ts_min <=32)):    # 23:30
         msg_idx=random.randint(0,len(config.MSG_SLEEP)-1)
