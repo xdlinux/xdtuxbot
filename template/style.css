@@ -177,8 +177,8 @@ a, a:visited{
   color: #999;
 }
 .long-url {
-  margin:4px 4px 4px 4px;
-  padding:2px 2px 2px 2px;
+  margin:.8em .8em;
+  padding:.2em .2em;
   border:1px solid #eee;
-  background:#eef;
+  background:#f8f8f8;
 }
