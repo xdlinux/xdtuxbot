@@ -1,6 +1,7 @@
 # -*- coding:utf8 -*-
-import re
-from google.appengine.api import urlfetch
+from config import WOEID
+import urllib
+from elementtree.ElementTree import parse
 
 class FetchError(Exception):
     def __init__(self,value):
@@ -10,19 +11,14 @@ class FetchError(Exception):
 
 count = 0
 
+WEATHER_URL = "http://weather.raychou.com/?/detail/%s/count_2/rss"
+
 def weather():
-    global count
-    try:
-        content = urlfetch.fetch('http://m.baidu.com/tq?area=%E8%A5%BF%E5%AE%89').content
-    except urlfetch.DownloadError:
-        count += 1
-        if count > 5:
-            raise FetchError(count)
-        else:
-            weather()
-   
-    today=re.findall(r'今\:.*?<',content)[0][:-1]
-    today=re.findall(r'白.*?$',today)[0]
-    return (today,count)
+    """docstring for weather"""
+    url = WEATHER_URL %  WOEID
+    rss = parse(urllib.urlopen(url)).getroot()
+    fc = rss.findtext('channel/item/description').encode("utf-8")
+    return fc
 
-
+if __name__ == "__main__":
+    weather()

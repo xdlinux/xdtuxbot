@@ -3,7 +3,6 @@
 import os
 import logging
 import re
-from sets import Set
 from datetime import datetime, timedelta
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -40,6 +39,11 @@ def url_expand( url ):
             return l
 
 def parse_content( content ):
+    content = content.encode("utf-8")
+    # 展开网址
+    content = re.sub(r'(https?://[!-z]*?)(\s|$)',
+                     r'<a href="\1">\1</a>\2',
+                     content)
     
     # 处理@
     content = re.sub(r'@(.*?)(\s|:|$)',
@@ -50,19 +54,14 @@ def parse_content( content ):
             r'<a href="https://twitter.com/search/%23\1">#\1</a>\2',
                     content)
    
-    # 展开网址
-    
-    content = re.sub(r'(http://.*?)(\s|$)',
-                     r'<a href="\1">\1</a>\2',
-                     content)
 
     r_url = re.compile('<a.*>(http://t.co/.*?)</a>')
     m = r_url.findall(content)
     for s_url in m:
-        print s_url
+        #logging.info(s_url) 
         if s_url != '':
             l_url = url_expand( s_url )
-            print l_url
+            logging.info(l_url) 
             content += '<div class="long-url"><a href="%s">%s</a></div>' \
                 % ( l_url, l_url)
     
@@ -119,24 +118,26 @@ class GetList(webapp.RequestHandler):
     api = tweepy.API(auth)
     
     user = self.request.get('user')
-    if user == 'xdlinux':
-        slug = 'rt-2'
-    elif user == 'xdlinuxbot':
-        slug = 'rt'
-    else:
-        user = 'xdlinux'
-        slug = 'rt-2'
     page = self.request.get('page')
     if page == '':
         page = 1
     else:
         page = int(page)
 
-    RT=api.list_timeline(owner=user,slug=slug,per_page=count,page=page)
-
+    
+    if user == 'xdlinux':
+        user = 'xdtuxbot'
+        RT=api.user_timeline(screen_name=user,count=count,page=page,include_rts=1)
+    else:
+        RT=api.list_timeline(owner="xdlinuxbot",slug='rt',per_page=count,page=page)
+    
     logging.info('Check list')
     logging.info(RT[0].created_at)
     
+    for i,item in enumerate(RT):
+        if item.retweeted:
+            RT[i] = item.retweeted_status
+
     #时区调整
     for i in range(len(RT)):
         Ttime=str(RT[i].created_at)
@@ -147,12 +148,13 @@ class GetList(webapp.RequestHandler):
             T[t]=int(T[t])
         Ttime=datetime(T[0],T[1],T[2],T[3],T[4],T[5])+timedelta(hours=+8)
         RT[i].created_at=Ttime.strftime('%Y-%m-%d %H:%M:%S')
+    
     #超链接和@ 
     for i in range(len(RT)):
         content = RT[i].text
+        #logging.info(content)
         content = parse_content( content )
         RT[i].text = content
-        #logging.info(content)
 
     next="RT?user=%s&page=%d" % (user,(page+1))
     if page > 1:
@@ -162,6 +164,7 @@ class GetList(webapp.RequestHandler):
     
     path = os.path.join(os.path.dirname(__file__), 'template/index.html')
     self.response.out.write(template.render(path, { 'RT': RT ,'NEXT': next, 'PREV':prev, 'LIST':user}))
+
 # Cron Job
 class CronJobCheck(webapp.RequestHandler):
   def get(self):
@@ -176,7 +179,7 @@ class CronJobCheck(webapp.RequestHandler):
     if (not Access_CronJob):
       logging.debug('CronJobCheck() access denied!')
       logging.critical('如果这个请求不是由你手动触发的话，这意味者你的CronJobKey已经泄漏！请立即修改CronJobKey以防被他人利用')
-    #  return
+      return
     
     mydate = datetime.utcnow() + timedelta(hours=+8)
     ts_hour = mydate.time().hour
@@ -184,8 +187,7 @@ class CronJobCheck(webapp.RequestHandler):
     
     dbug = self.request.get('debug')
     logging.debug(dbug)
-
-
+    
     # 7:00早安世界
     if (((ts_hour == 7) and ( 0 <= ts_min <= 2)) or (dbug=='morning')): # 7:00
         error = False
@@ -198,17 +200,18 @@ class CronJobCheck(webapp.RequestHandler):
         if error:
             msg = '%s%s' % (config.MSG_GET_UP[msg_idx],config.BOT_HASHTAG)
         else:
-            msg = '%s 今天西安的天气是:%s %s' % \
-                (config.MSG_GET_UP[msg_idx], wther[0], config.BOT_HASHTAG)
+            msg = '%s 今天%s的天气是:%s %s' % \
+                (config.MSG_GET_UP[msg_idx], config.CITY, wther, config.BOT_HASHTAG)
         
-        resp=OAuth_UpdateTweet(msg)                        # 早安世界
-        logging.info("%s:%d" % (msg,wther[1]))
+        OAuth_UpdateTweet(msg)                        # 早安世界
+        logging.info("%s:%d" % (msg,wther))
    
+
     # 23:30 晚安世界
     elif ((ts_hour == 23) and (30 <= ts_min <=32)):    # 23:30
         msg_idx=random.randint(0,len(config.MSG_SLEEP)-1)
         msg = '%s%s' % (config.MSG_SLEEP[msg_idx], config.BOT_HASHTAG)
-        resp=OAuth_UpdateTweet(msg)                        # 晚安世界
+        OAuth_UpdateTweet(msg)                        # 晚安世界
         logging.info(msg)
   
     # 每小时一条命令
@@ -219,7 +222,7 @@ class CronJobCheck(webapp.RequestHandler):
             msg = '%s %s' % ( "叮咚！小bot教CLI时间到了！", msg[:-1])
             msg +="#commandlinefu"
             logging.info(msg)
-            resp = OAuth_UpdateTweet(msg)
+            OAuth_UpdateTweet(msg)
 
     # 扫TL，转推
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
@@ -249,7 +252,6 @@ class CronJobCheck(webapp.RequestHandler):
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
             continue
-        
         text = tweet.text
         m = regx.search(text)
         if m == None:
@@ -257,14 +259,14 @@ class CronJobCheck(webapp.RequestHandler):
         n = mgc.search(text)
         if n != None:
             continue
-
-
+        
         msg = 'RT @%s:%s' % (user,text)
         #logging.info(msg)
-        
+         
         try:
-          resp=OAuth_UpdateTweet(msg)           # 发送到Twitter
-          logging.info('Send Tweet: %s, rtn %s' % (msg, resp))
+            #resp=OAuth_UpdateTweet(msg)           # 发送到Twitter
+            api.retweet(tweet.id) 
+            logging.info('Send Tweet: %s' % (msg))
         except tweepy.TweepError, e:
             msg = 'Tweepy Error:%s' % e
             logging.error(msg)
