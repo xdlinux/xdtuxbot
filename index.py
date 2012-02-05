@@ -69,12 +69,12 @@ def parse_content( content ):
     return content
 
 # OAuth认证并发推
-def OAuth_UpdateTweet(msg):
+def OAuth_UpdateTweet(msg,reply=None):
   if msg != '':
     auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_SECRET)
     api = tweepy.API(auth)
-    return(api.update_status(msg))
+    return( (reply and api.update_status(msg,reply)) or api.update_status(msg) )
 
 # 请求 /
 class MainPage(webapp.RequestHandler):
@@ -279,16 +279,14 @@ class CronJobCheck(webapp.RequestHandler):
          
         try:
             if msg:
-                OAuth_UpdateTweet(msg)           # 发送到Twitter
+                OAuth_UpdateTweet(msg,reply=tweet.id)           # 发送到Twitter
                 logging.info('Send Tweet: %s' % (msg))
             else:
                 api.retweet(tweet.id) 
         except tweepy.TweepError, e:
-            msg = 'Tweepy Error:%s' % e
-            logging.error(msg)
+            logging.error('Tweepy Error:%s' % e)
         except Exception, e:
-            msg = 'Uknow Error'
-            logging.error(msg)
+            logging.error('Uknow Error:%s' % e)
     
     tweetid.since_id=tweet.id
     logging.info("Next Since ID: %d" % tweetid.since_id)
