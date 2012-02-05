@@ -61,7 +61,7 @@ def parse_content( content ):
         #logging.info(s_url) 
         if s_url != '':
             l_url = url_expand( s_url )
-            logging.info(l_url) 
+            #logging.info(l_url) 
             content += '<div class="long-url"><a href="%s">%s</a></div>' \
                 % ( l_url, l_url)
     
