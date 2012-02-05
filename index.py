@@ -15,7 +15,7 @@ import config
 import tweepy
 import urlparse,httplib
 import command
-
+from Talkbot import TalkBot
 # When this is true, some things go to the screen as text and templates aren't always generated. Error message are more verbose.
 _DEBUG = True
 
@@ -125,18 +125,27 @@ class GetList(webapp.RequestHandler):
         page = int(page)
 
     
-    if user == 'xdlinux':
+    if user == 'xdlinux' or user == 'xdtuxbot':
         user = 'xdtuxbot'
-        RT=api.user_timeline(screen_name=user,count=count,page=page,include_rts=1)
+        tweets=api.user_timeline(screen_name=user,count=count,page=page,include_rts=1)
     else:
-        RT=api.list_timeline(owner="xdlinuxbot",slug='rt',per_page=count,page=page)
+        tweets=api.list_timeline(owner="xdlinuxbot",slug='rt',per_page=count,page=page)
     
     logging.info('Check list')
-    logging.info(RT[0].created_at)
+    logging.info(tweets[0].created_at)
     
-    for i,item in enumerate(RT):
+    RT = []
+    for i,item in enumerate(tweets):
+        if item.user.screen_name == "xdtuxbot" and ( "xdlinux" not in item.text) and not item.retweeted:
+            #logging.info(item.text)
+            continue 
         if item.retweeted:
-            RT[i] = item.retweeted_status
+            try:
+                RT.append( item.retweeted_status )
+            except:
+                pass
+        else:
+            RT.append( item )
 
     #时区调整
     for i in range(len(RT)):
@@ -220,7 +229,7 @@ class CronJobCheck(webapp.RequestHandler):
         if msg != None:
             msg = msg.replace("# commandlinefu.com by David Winterbottom\n\n#","//")
             msg = '%s %s' % ( "叮咚！小bot教CLI时间到了！", msg[:-1])
-            msg +="#commandlinefu"
+            msg +="#commandlinefu #xdlinux"
             logging.info(msg)
             OAuth_UpdateTweet(msg)
 
@@ -243,11 +252,13 @@ class CronJobCheck(webapp.RequestHandler):
     #self.response.out.write('GETTING TIMELINE<br />')
     regx=re.compile(config.RT_REGEX,re.I|re.M)
     mgc = re.compile(config.MGC,re.I|re.M)
+    talk_to_me = re.compile(config.TALK,re.I|re.M)
     tweets=timeline[::-1]   # 时间是倒序的
     if tweets == []:
         logging.info("no new tweets!")
         return
-    
+
+    msg=None 
     for tweet in tweets:
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
@@ -259,14 +270,19 @@ class CronJobCheck(webapp.RequestHandler):
         n = mgc.search(text)
         if n != None:
             continue
-        
-        msg = 'RT @%s:%s' % (user,text)
-        #logging.info(msg)
+        t = talk_to_me.search(text)
+        if t:
+            bot = TalkBot()
+            reply = bot.respond( talk_to_me.sub("",text) ).decode('UTF-8')
+            if reply != '': 
+                msg = u"@%s %s" % (user, reply)    
          
         try:
-            #resp=OAuth_UpdateTweet(msg)           # 发送到Twitter
-            api.retweet(tweet.id) 
-            logging.info('Send Tweet: %s' % (msg))
+            if msg:
+                OAuth_UpdateTweet(msg)           # 发送到Twitter
+                logging.info('Send Tweet: %s' % (msg))
+            else:
+                api.retweet(tweet.id) 
         except tweepy.TweepError, e:
             msg = 'Tweepy Error:%s' % e
             logging.error(msg)

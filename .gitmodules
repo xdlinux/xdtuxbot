@@ -1,0 +1,3 @@
+[submodule "Talkbot"]
+	path = Talkbot
+	url = git@github.com:xdlinux/Talkbot.git
