@@ -10,9 +10,12 @@ ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 #手动发Tweet的KEY
 TWEET_KEY = 'V8Q6DvexTyCE3se47rtBX8em'
 ## 关键词
-RT_REGEX="""diumoo|xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python| geek |apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu|perl|freebsd|netbsd|openbsd|hack|html5| kde """
+RT_REGEX="""diumoo|xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python| geek |apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu |perl|freebsd|netbsd|openbsd|hack|html5| kde """
 
 MGC="gfw|翻墙|中共|土共|共产党|当局|政府|#notrt|#nort"
+
+TALK="^@xdtuxbot"
+
 ## 访问路径
 URL_RT = '/RT'                      # 推群
 URL_TIMELINE = '/timeline'          # 时间线
@@ -29,7 +32,8 @@ MSG_GET_UP      = ['早安世界，上午神马课阿',
                    '唔，昨晚梦见没纸了……',
                    '早安世界，好困哦！',
                    '早安世界，可是我还想睡！',
-                   '早安世界，求调教！ ',
+                   '早安世界，求调教！cc @htdong',
+                   '早安世界，好想要 @mfs6174 来教我说话啊！',
                    '新的一天！伸个懒腰～ ʅ(‾◡◝)ʃ',
                    '一定要起床么，我还没睡醒唉…'
                     ]   # 早上 07:00 的起床推
