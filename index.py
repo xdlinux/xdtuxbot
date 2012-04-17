@@ -136,10 +136,9 @@ class GetList(webapp.RequestHandler):
     
     RT = []
     for i,item in enumerate(tweets):
-        if item.user.screen_name == "xdtuxbot" and ( "xdlinux" not in item.text) and not item.retweeted:
-            #logging.info(item.text)
+        if item.user.screen_name == "xdtuxbot" and ( "xdlinux" not in item.text) and (not item.retweeted_status):
             continue 
-        if item.retweeted:
+        if hasattr(item,'retweeted_status'):
             try:
                 RT.append( item.retweeted_status )
             except:
@@ -198,7 +197,7 @@ class CronJobCheck(webapp.RequestHandler):
     logging.debug(dbug)
     
     # 7:00早安世界
-    if (((ts_hour == 7) and ( 0 <= ts_min <= 2)) or (dbug=='morning')): # 7:00
+    if (((ts_hour == 7) and ( 30 <= ts_min <= 32)) or (dbug=='morning')): # 7:00
         error = False
         try:
             wther=weather.weather()
