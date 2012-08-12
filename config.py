@@ -10,7 +10,10 @@ ACCESS_SECRET = 'se9ztHd3GiuYm5bYXfVdeGQhUkiJ2MVHn7EryqXuE0'
 #手动发Tweet的KEY
 TWEET_KEY = 'V8Q6DvexTyCE3se47rtBX8em'
 ## 关键词
-RT_REGEX="""diumoo|xdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python| geek |apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu |perl|freebsd|netbsd|openbsd|hack|html5| kde """
+RT_REGEX="""diumooxdtuxbot|linux|unix|android|meego|ubuntu|arch|gentoo|debian|firefox|chrome|chromium|python| geek |apache|nginx|sql|php|django|rails|ruby|GPL|vim|emacs|gnome|gnu |perl|freebsd|netbsd|openbsd|hack|html5| kde |fcitx"""
+
+RT_LIST=['diumoo', '@xdtuxbot', 'linux', 'unix', 'android', 'meego', 'ubuntu', 'arch', 'gentoo', 'debian', 'firefox', 'chrome', 'chromium', 'python', 'geek', 'apache', 'nginx', 'sql', 'php', 'django', 'rails', 'ruby', 'GPL', 'vim', 'emacs', 'gnome', 'gnu ', 'perl', 'freebsd', 'netbsd', 'openbsd', 'hack', 'html5', 'kde', 'fcitx']
+
 
 MGC="gfw|翻墙|中共|土共|共产党|当局|政府|#notrt|#nort"
 

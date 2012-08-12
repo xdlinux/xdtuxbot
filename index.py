@@ -9,6 +9,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 
 from google.appengine.ext import db
+from smallseg import SEG
 import random
 import weather
 import config 
@@ -258,18 +259,28 @@ class CronJobCheck(webapp.RequestHandler):
         return
 
     msg=None 
+    seg = SEG()
     for tweet in tweets:
         user = tweet.user.screen_name
         if user == 'xdtuxbot':
             continue
         text = tweet.text
-        m = regx.search(text)
-        if m == None:
-            continue
         n = mgc.search(text)
         if n != None:
             continue
+        
         t = talk_to_me.search(text)
+        if (not t) and text[0]=='@':
+            continue
+
+        wlist = seg.cut(text.encode('utf-8')) 
+        logging.info( ' '.join(wlist) ) 
+        for w in wlist:
+            if w in config.RT_LIST:
+                break
+        else:
+            continue
+
         if t:
             bot = TalkBot()
             reply = bot.respond( talk_to_me.sub("",text) ).decode('UTF-8')
